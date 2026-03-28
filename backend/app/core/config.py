@@ -19,9 +19,9 @@ class Settings(BaseSettings):
     PORT: int = 8000
     
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://user:pass@localhost/bunga_trader"
+    DATABASE_URL: str = ""
     # Set true on hosts that require TLS (e.g. some public Railway/Postgres URLs)
-    DATABASE_SSL_REQUIRE: bool = False
+    DATABASE_SSL_REQUIRE: bool = True
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 10
     
@@ -125,7 +125,7 @@ class Settings(BaseSettings):
         return self
 
     class Config:
-        env_file = ".env", ".env.production"
+        env_file = None
         env_file_encoding = "utf-8"
         case_sensitive = True
 
