@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
@@ -5,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.db.base import get_db
+
+logger = logging.getLogger(__name__)
 from app.core.security import (
     verify_password, 
     get_password_hash, 
