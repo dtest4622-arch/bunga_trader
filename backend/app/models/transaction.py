@@ -1,7 +1,10 @@
+import enum
 import uuid
 from datetime import datetime
+
 from sqlalchemy import Column, String, Boolean, DateTime, Integer, Float, Text, ForeignKey, Enum, JSON
-import enum
+from sqlalchemy.orm import relationship
+
 from app.db.base import Base
 
 
