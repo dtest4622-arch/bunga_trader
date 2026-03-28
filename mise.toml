@@ -1,0 +1,3 @@
+[tools]
+# Align with .python-version (Railpack reads mise.toml first)
+python = "3.11.9"

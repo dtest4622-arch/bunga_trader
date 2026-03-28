@@ -1,0 +1,9 @@
+# Railway Nixpacks configuration
+[phases.setup]
+nixPkgs = ["python311"]
+
+[phases.install]
+cmds = [
+    "cd backend && python -m ensurepip --upgrade",
+    "cd backend && python -m pip install -r requirements.txt"
+]

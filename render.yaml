@@ -1,0 +1,76 @@
+services:
+  # Main FastAPI Backend
+  - type: web
+    name: bunga-trader-api
+    env: python
+    region: oregon
+    branch: main
+    buildCommand: cd backend && python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+    startCommand: cd backend && python serve.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DEBUG
+        value: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bunga-db
+          property: connectionString
+      - key: REDIS_URL
+        fromDatabase:
+          name: bunga-redis
+          property: connectionString
+    healthCheckPath: /health
+
+  # Celery Worker (optional)
+  - type: worker
+    name: bunga-trader-worker
+    env: python
+    region: oregon
+    branch: main
+    buildCommand: cd backend && python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+    startCommand: cd backend && celery -A app.services.celery_app:celery_app worker --loglevel=info
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bunga-db
+          property: connectionString
+      - key: REDIS_URL
+        fromDatabase:
+          name: bunga-redis
+          property: connectionString
+
+  # Celery Beat Scheduler (optional)
+  - type: worker
+    name: bunga-trader-scheduler
+    env: python
+    region: oregon
+    branch: main
+    buildCommand: cd backend && python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+    startCommand: cd backend && celery -A app.services.celery_app:celery_app beat --loglevel=info
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bunga-db
+          property: connectionString
+      - key: REDIS_URL
+        fromDatabase:
+          name: bunga-redis
+          property: connectionString
+
+databases:
+  # PostgreSQL Database
+  - name: bunga-db
+    databaseName: bunga_trader
+    user: bunga_user
+    region: oregon
+
+  # Redis Cache (for Celery)
+  - name: bunga-redis
+    region: oregon
