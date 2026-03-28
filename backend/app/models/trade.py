@@ -66,7 +66,7 @@ class Trade(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Relationships
-    signal = relationship("Signal", back_populates="trade", foreign_keys="Signal.trade_id")
+    signal = relationship("Signal", back_populates="trades")
     account = relationship("TradingAccount", back_populates="trades")
     
     def __repr__(self):

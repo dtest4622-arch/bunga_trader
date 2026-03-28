@@ -48,7 +48,6 @@ class Signal(Base):
     # Execution
     executed_by = Column(String(36), ForeignKey("users.id"), nullable=True)
     executed_at = Column(DateTime, nullable=True)
-    trade_id = Column(String(36), ForeignKey("trades.id"), nullable=True)
     
     # Expiry
     expires_at = Column(DateTime, nullable=True)
@@ -58,8 +57,8 @@ class Signal(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
-    # Relationships
-    trade = relationship("Trade", back_populates="signal", foreign_keys="Trade.signal_id")
+    # Relationships (Trade.signal_id -> Signal.id)
+    trades = relationship("Trade", back_populates="signal", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Signal(id={self.id}, pair={self.pair}, direction={self.direction})>"
