@@ -50,7 +50,8 @@ class ApiService {
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }
-          print('[API Request] ${options.method} ${options.path}');
+          print(
+              '[API Request] ${options.method} ${options.path} - data=${options.data}');
           return handler.next(options);
         },
         onResponse: (response, handler) {
