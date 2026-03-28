@@ -43,7 +43,33 @@ bunga_trader/
 
 ## Deployment
 
-### Railway (Free Tier)
+### Render (Free Tier - Recommended)
+
+1. **Connect Repository**
+   - Push code to GitHub
+   - Connect Render to your GitHub repo
+
+2. **Create PostgreSQL Database**
+   - In Render dashboard, create a new PostgreSQL database
+   - Choose free tier (750 hours/month included)
+   - Note the connection string
+
+3. **Deploy Web Service**
+   - Use the `render.yaml` blueprint (auto-detected)
+   - Or create manually: Python → Connect repo → Set build/start commands
+   - Build command: `cd backend && pip install -r requirements.txt`
+   - Start command: `cd backend && python serve.py`
+
+4. **Connect Database**
+   - In your web service → Environment → Add `DATABASE_URL`
+   - Paste the PostgreSQL connection string from step 2
+   - Render automatically converts it to the right format
+
+5. **Verify**
+   - Check `/health` endpoint for database status
+   - Free tier: 750 hours/month, auto-sleeps after 15 mins inactivity
+
+### Railway (Alternative Free Option)
 
 1. **Connect Repository**
    - Push code to GitHub
