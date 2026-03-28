@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     TELEGRAM_API_HASH: str = ""
     TELEGRAM_SESSION_NAME: str = "bunga_trader_session"
     TELEGRAM_SIGNAL_GROUPS: List[str] = []
+    TELEGRAM_BOT_TOKEN: str = ""
+    TELEGRAM_PHONE: str = ""
+    TELEGRAM_2FA_PASSWORD: str = ""
 
     @field_validator("TELEGRAM_API_ID", mode="before")
     @classmethod

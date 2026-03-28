@@ -30,9 +30,22 @@ class TelegramSignalListener:
             settings.TELEGRAM_API_ID,
             settings.TELEGRAM_API_HASH
         )
-        
-        await self.client.start()
-        
+
+        await self.client.connect()
+        if not await self.client.is_user_authorized():
+            if settings.TELEGRAM_BOT_TOKEN:
+                await self.client.start(bot_token=settings.TELEGRAM_BOT_TOKEN)
+            elif settings.TELEGRAM_PHONE:
+                await self.client.start(
+                    phone=settings.TELEGRAM_PHONE,
+                    password=settings.TELEGRAM_2FA_PASSWORD or None,
+                )
+            else:
+                print("Telegram credentials missing or session not authorized: skipping Telegram listener")
+                await self.client.disconnect()
+                self.client = None
+                return
+
         # Set up message handler
         self.client.on(events.NewMessage)(self._handle_message)
         
