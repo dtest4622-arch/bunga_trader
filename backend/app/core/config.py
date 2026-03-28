@@ -3,10 +3,16 @@ from typing import List, Optional, Union
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from pydantic import field_validator, model_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=None,
+        case_sensitive=True,
+        extra="ignore",
+    )
+    
     # App
     APP_NAME: str = "Bunga Trader API"
     DEBUG: bool = False
@@ -22,8 +28,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str = ""
     # Set true on hosts that require TLS (e.g. some public Railway/Postgres URLs)
     DATABASE_SSL_REQUIRE: bool = True
-    DATABASE_POOL_SIZE: int = 20
-    DATABASE_MAX_OVERFLOW: int = 10
+    DATABASE_POOL_SIZE: int = 5  # Reduced for Railway free tier
+    DATABASE_MAX_OVERFLOW: int = 5  # Reduced for Railway free tier
     
     # Redis (empty = disabled; avoid default localhost in PaaS workers — it is never valid in-container)
     REDIS_URL: str = ""
@@ -125,11 +131,6 @@ class Settings(BaseSettings):
         if ssl_required:
             object.__setattr__(self, "DATABASE_SSL_REQUIRE", True)
         return self
-
-    class Config:
-        env_file = None
-        env_file_encoding = "utf-8"
-        case_sensitive = True
 
 
 @lru_cache()

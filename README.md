@@ -41,13 +41,52 @@ bunga_trader/
 └── docker-compose.yml
 ```
 
-## Quick Start
+## Deployment
 
-### Prerequisites
+### Railway (Free Tier)
 
-- Docker and Docker Compose
-- Flutter SDK (for mobile development)
-- Python 3.11+ (for backend development)
+1. **Connect Repository**
+   - Push code to GitHub
+   - Connect Railway to your GitHub repo
+
+2. **Add Database**
+   - In Railway dashboard, add a PostgreSQL database
+   - Note: Railway free tier includes 512MB Postgres
+
+3. **Connect Database to Service**
+   - Go to your web service → Database tab
+   - Click "Connect" next to your Postgres database
+   - This automatically injects `DATABASE_URL`
+
+4. **Deploy**
+   - Railway auto-detects `Procfile` and `requirements.txt`
+   - Service deploys automatically
+
+5. **Verify**
+   - Check `/health` endpoint for database status
+   - If DATABASE_URL is missing, run `python debug_env.py` in Railway logs
+
+### Local Development
+
+```bash
+# Backend
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python serve.py
+
+# Frontend
+cd frontend
+flutter pub get
+flutter run
+```
+
+### Docker
+
+```bash
+docker-compose up --build
+```
 - MetaTrader 4 or 5 (for trading)
 
 ### 1. Clone and Configure

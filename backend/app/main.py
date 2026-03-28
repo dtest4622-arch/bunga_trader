@@ -4,9 +4,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.core.config import settings
-from app.db.base import init_db, close_db
+from app.db.base import init_db, close_db, _get_engine
 from app.api.routes import auth, accounts, signals, trades, mpesa, settings as settings_routes
 
 logger = logging.getLogger(__name__)
@@ -95,8 +96,33 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
-    return {"status": "healthy"}
+    """Health check endpoint with database diagnostics."""
+    health_data = {
+        "status": "healthy",
+        "database": {
+            "configured": bool(settings.DATABASE_URL),
+            "url_preview": settings.DATABASE_URL[:20] if settings.DATABASE_URL else "NOT SET",
+        }
+    }
+    
+    # Try to validate database connection
+    try:
+        if settings.DATABASE_URL:
+            engine = _get_engine()
+            async with engine.connect() as conn:
+                await conn.execute("SELECT 1")
+            health_data["database"]["status"] = "connected"
+        else:
+            logger.warning("DATABASE_URL is not configured - database will be unavailable until environment is set")
+            health_data["database"]["status"] = "not_configured"
+            health_data["database"]["warning"] = "DATABASE_URL environment variable not set. For Railway, ensure Postgres database is connected to this service."
+            health_data["status"] = "degraded"  # Still return 200 but indicate issue
+    except Exception as e:
+        health_data["database"]["status"] = "error"
+        health_data["database"]["error"] = str(e)[:100]
+        health_data["status"] = "unhealthy"
+    
+    return health_data
 
 
 if __name__ == "__main__":
