@@ -162,6 +162,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           }
           return 'Invalid input. Please review your fields.';
         }
+        if (statusCode == 500) {
+          if (data is Map && data['detail'] != null) {
+            return 'Server error: ${data['detail']}';
+          } else if (data is String && data.isNotEmpty) {
+            return 'Server error: $data';
+          }
+          return 'Server error. Please try again later.';
+        }
       }
 
       switch (error.type) {

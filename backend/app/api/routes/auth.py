@@ -32,42 +32,51 @@ security = HTTPBearer()
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     """Register a new user."""
-    # Check if email exists
-    result = await db.execute(select(User).where(User.email == user_data.email))
-    if result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Email already registered"
+    try:
+        # Check if email exists
+        result = await db.execute(select(User).where(User.email == user_data.email))
+        if result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email already registered"
+            )
+        
+        # Validate password
+        is_valid, message = validate_password(user_data.password)
+        if not is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=message
+            )
+        
+        # Create user
+        user = User(
+            email=user_data.email,
+            hashed_password=get_password_hash(user_data.password),
+            phone_number=user_data.phone_number,
+            mpesa_number=user_data.mpesa_number,
+            full_name=user_data.full_name,
         )
-    
-    # Validate password
-    is_valid, message = validate_password(user_data.password)
-    if not is_valid:
+        
+        db.add(user)
+        await db.flush()
+        
+        # Create default settings
+        settings = UserSettings(user_id=user.id)
+        db.add(settings)
+        
+        await db.commit()
+        await db.refresh(user)
+        
+        return user.to_dict()
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Registration failed for email %s", user_data.email)
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=message
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Registration failed: {str(e)}"
         )
-    
-    # Create user
-    user = User(
-        email=user_data.email,
-        hashed_password=get_password_hash(user_data.password),
-        phone_number=user_data.phone_number,
-        mpesa_number=user_data.mpesa_number,
-        full_name=user_data.full_name,
-    )
-    
-    db.add(user)
-    await db.flush()
-    
-    # Create default settings
-    settings = UserSettings(user_id=user.id)
-    db.add(settings)
-    
-    await db.commit()
-    await db.refresh(user)
-    
-    return user.to_dict()
 
 
 @router.post("/login", response_model=TokenResponse)

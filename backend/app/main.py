@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 
 from app.core.config import settings
 from app.db.base import init_db, close_db, _get_engine
@@ -92,6 +93,22 @@ async def root():
         "version": settings.VERSION,
         "status": "running"
     }
+
+
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    logger.exception("Unhandled exception: %s", exc)
+    detail = str(exc)
+    if isinstance(exc, RequestValidationError):
+        detail = exc.errors()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": detail},
+    )
 
 
 @app.get("/health")
