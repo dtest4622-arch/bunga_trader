@@ -47,12 +47,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
 
       context.read<AuthBloc>().add(RegisterRequested(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        phoneNumber: _phoneController.text.trim(),
-        mpesaNumber: _mpesaController.text.trim(),
-        fullName: _fullNameController.text.trim(),
-      ));
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            phoneNumber: _phoneController.text.trim(),
+            mpesaNumber: _mpesaController.text.trim(),
+            fullName: _fullNameController.text.trim(),
+          ));
     }
   }
 
@@ -94,7 +94,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: const TextStyle(color: AppTheme.textPrimary),
                     decoration: const InputDecoration(
                       labelText: 'Full Name',
-                      prefixIcon: Icon(Icons.person_outline, color: AppTheme.textSecondary),
+                      prefixIcon: Icon(Icons.person_outline,
+                          color: AppTheme.textSecondary),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -111,7 +112,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: const TextStyle(color: AppTheme.textPrimary),
                     decoration: const InputDecoration(
                       labelText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined, color: AppTheme.textSecondary),
+                      prefixIcon: Icon(Icons.email_outlined,
+                          color: AppTheme.textSecondary),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -131,7 +133,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: const TextStyle(color: AppTheme.textPrimary),
                     decoration: const InputDecoration(
                       labelText: 'Phone Number',
-                      prefixIcon: Icon(Icons.phone_outlined, color: AppTheme.textSecondary),
+                      prefixIcon: Icon(Icons.phone_outlined,
+                          color: AppTheme.textSecondary),
                       hintText: '+254 7XX XXX XXX',
                     ),
                     validator: (value) {
@@ -149,7 +152,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: const TextStyle(color: AppTheme.textPrimary),
                     decoration: const InputDecoration(
                       labelText: 'M-Pesa Number',
-                      prefixIcon: Icon(Icons.account_balance_wallet_outlined, color: AppTheme.mpesaGreen),
+                      prefixIcon: Icon(Icons.account_balance_wallet_outlined,
+                          color: AppTheme.mpesaGreen),
                       hintText: '2547XX XXX XXX',
                     ),
                     validator: (value) {
@@ -167,10 +171,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: const TextStyle(color: AppTheme.textPrimary),
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outlined, color: AppTheme.textSecondary),
+                      prefixIcon: const Icon(Icons.lock_outlined,
+                          color: AppTheme.textSecondary),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                           color: AppTheme.textSecondary,
                         ),
                         onPressed: () {
@@ -187,6 +194,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       if (value.length < 8) {
                         return 'Password must be at least 8 characters';
                       }
+                      if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                        return 'Password must contain at least one uppercase letter';
+                      }
+                      if (!RegExp(r'[a-z]').hasMatch(value)) {
+                        return 'Password must contain at least one lowercase letter';
+                      }
+                      if (!RegExp(r'[0-9]').hasMatch(value)) {
+                        return 'Password must contain at least one digit';
+                      }
                       return null;
                     },
                   ),
@@ -198,10 +214,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: const TextStyle(color: AppTheme.textPrimary),
                     decoration: InputDecoration(
                       labelText: 'Confirm Password',
-                      prefixIcon: const Icon(Icons.lock_outlined, color: AppTheme.textSecondary),
+                      prefixIcon: const Icon(Icons.lock_outlined,
+                          color: AppTheme.textSecondary),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                          _obscureConfirmPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                           color: AppTheme.textSecondary,
                         ),
                         onPressed: () {
@@ -259,7 +278,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       return ElevatedButton(
                         onPressed: state is AuthLoading ? null : _register,
                         style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, AppConstants.buttonHeight),
+                          minimumSize: const Size(
+                              double.infinity, AppConstants.buttonHeight),
                         ),
                         child: state is AuthLoading
                             ? const SizedBox(
@@ -267,7 +287,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 height: 24,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
                                 ),
                               )
                             : const Text('Create Account'),

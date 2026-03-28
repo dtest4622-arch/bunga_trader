@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/constants/app_constants.dart';
@@ -5,34 +6,44 @@ import '../../core/constants/app_constants.dart';
 class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
-  ApiService._internal();
 
-  // Backend API for authentication and business logic
-  final Dio _apiDio = Dio(BaseOptions(
-    baseUrl: AppConstants.apiBaseUrl,
-    connectTimeout: const Duration(seconds: 30),
-    receiveTimeout: const Duration(seconds: 30),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  ));
-
-  // Supabase REST API for data access (profiles, accounts, signals, etc.)
-  final Dio _supabaseDio = Dio(BaseOptions(
-    baseUrl: '${AppConstants.supabaseUrl}/rest/v1',
-    connectTimeout: const Duration(seconds: 30),
-    receiveTimeout: const Duration(seconds: 30),
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': AppConstants.supabaseAnonKey,
-      'Authorization': 'Bearer ${AppConstants.supabaseAnonKey}',
-    },
-  ));
-
+  late Dio _apiDio;
+  late Dio _supabaseDio;
   final _storage = const FlutterSecureStorage();
 
+  ApiService._internal() {
+    _initializeDio();
+  }
+
+  void _initializeDio() {
+    // Backend API for authentication and business logic
+    _apiDio = Dio(BaseOptions(
+      baseUrl: AppConstants.apiBaseUrl,
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    ));
+
+    // Supabase REST API for data access (profiles, accounts, signals, etc.)
+    _supabaseDio = Dio(BaseOptions(
+      baseUrl: '${AppConstants.supabaseUrl}/rest/v1',
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': AppConstants.supabaseAnonKey,
+        'Authorization': 'Bearer ${AppConstants.supabaseAnonKey}',
+      },
+    ));
+
+    // Setup interceptors for both clients
+    _setupInterceptors();
+  }
+
   // Interceptors
-  void setupInterceptors() {
+  void _setupInterceptors() {
     _apiDio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -40,9 +51,16 @@ class ApiService {
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          print('[API Request] ${options.method} ${options.path}');
           return handler.next(options);
         },
+        onResponse: (response, handler) {
+          print(
+              '[API Response] ${response.statusCode} ${response.requestOptions.path}');
+          return handler.next(response);
+        },
         onError: (error, handler) async {
+          print('[API Error] ${error.type} - ${error.message}');
           if (error.response?.statusCode == 401) {
             // Token expired, try to refresh
             final refreshed = await _refreshToken();
@@ -52,6 +70,22 @@ class ApiService {
               return handler.resolve(await _apiDio.fetch(error.requestOptions));
             }
           }
+          return handler.next(error);
+        },
+      ),
+    );
+
+    _supabaseDio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await getAuthToken();
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          return handler.next(options);
+        },
+        onError: (error, handler) async {
+          print('[Supabase Error] ${error.type} - ${error.message}');
           return handler.next(error);
         },
       ),

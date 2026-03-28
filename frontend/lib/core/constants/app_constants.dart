@@ -11,8 +11,8 @@ class AppConstants {
   static const String supabaseAnonKey =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2cGdra2Fhdm1la2tlbmNka2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0Nzk1MzUsImV4cCI6MjA5MDA1NTUzNX0.ZLrY2VY0x9sZoe6RB0YTNxW2faNg4WRdIdAbKds5LNE';
   // Backend API URL - update to your backend server
-  static const String apiBaseUrl = 'http://localhost:8000/v1';
-  static const String wsBaseUrl = 'ws://localhost:8000/ws';
+  static const String apiBaseUrl = 'https://bunga-trader.onrender.com/v1';
+  static const String wsBaseUrl = 'wss://bunga-trader.onrender.com/ws';
   static const int apiTimeoutSeconds = 30;
   static const int maxRetryAttempts = 3;
 

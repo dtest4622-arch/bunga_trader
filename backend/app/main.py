@@ -106,11 +106,13 @@ async def health_check():
     }
     
     # Try to validate database connection
+    from sqlalchemy import text
+
     try:
         if settings.DATABASE_URL:
             engine = _get_engine()
             async with engine.connect() as conn:
-                await conn.execute("SELECT 1")
+                await conn.execute(text("SELECT 1"))
             health_data["database"]["status"] = "connected"
         else:
             logger.warning("DATABASE_URL is not configured - database will be unavailable until environment is set")
