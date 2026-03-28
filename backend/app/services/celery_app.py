@@ -7,18 +7,36 @@ and use alternative approaches like:
 - Redis Queue (RQ) for simple task queues
 """
 
+from urllib.parse import urlparse
+
 from celery import Celery
 from app.core.config import settings
 
-# Celery app - disabled by default for simple deployments
-# Enable if you have Redis provisioned
+
+def _celery_broker_and_result_url() -> str | None:
+    """Celery/Kombu only supports brokers like redis:// and amqp:// — not postgresql://."""
+    raw = (settings.CELERY_BROKER_URL or settings.REDIS_URL or "").strip()
+    if not raw:
+        return None
+    scheme = (urlparse(raw).scheme or "").lower()
+    if scheme.startswith("postgres") or "postgres" in scheme:
+        raise ValueError(
+            "Celery needs a Redis URL (redis:// or rediss://), not PostgreSQL. "
+            "On Railway, set REDIS_URL (or CELERY_BROKER_URL) from your Redis service, "
+            "not from DATABASE_URL / Postgres."
+        )
+    return raw
+
+
+# Celery app - disabled if no broker URL
 celery_app = None
 
-if settings.REDIS_URL:
+_broker = _celery_broker_and_result_url()
+if _broker:
     celery_app = Celery(
         'bunga_trader',
-        broker=settings.REDIS_URL,
-        backend=settings.REDIS_URL,
+        broker=_broker,
+        backend=_broker,
         include=['app.services.celery_tasks']
     )
     

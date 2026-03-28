@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     
     # Redis (empty = disabled; avoid default localhost in PaaS workers — it is never valid in-container)
     REDIS_URL: str = ""
+    # Optional override for Celery only (otherwise REDIS_URL is used). Must be redis:// or rediss://.
+    CELERY_BROKER_URL: str = ""
     REDIS_DB: int = 0
     
     # Security
