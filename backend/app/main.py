@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.db.base import init_db, close_db
-from app.api.routes import auth, accounts, signals, trades, mpesa, settings as settings_routes, websocket
+from app.api.routes import auth, accounts, signals, trades, mpesa, settings as settings_routes
 
 logger = logging.getLogger(__name__)
 
@@ -81,9 +81,6 @@ app.include_router(signals.router, prefix=f"{settings.API_V1_PREFIX}/signals", t
 app.include_router(trades.router, prefix=f"{settings.API_V1_PREFIX}/trades", tags=["Trades"])
 app.include_router(mpesa.router, prefix=f"{settings.API_V1_PREFIX}/mpesa", tags=["M-Pesa"])
 app.include_router(settings_routes.router, prefix=f"{settings.API_V1_PREFIX}/settings", tags=["Settings"])
-
-# WebSocket endpoint
-app.add_api_websocket_route("/ws", websocket.websocket_endpoint)
 
 
 @app.get("/")
