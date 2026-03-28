@@ -102,6 +102,8 @@ class Settings(BaseSettings):
             url = "postgresql+asyncpg://" + url[len("postgres://") :]
         elif url.startswith("postgresql://") and not url.startswith("postgresql+asyncpg://"):
             url = "postgresql+asyncpg://" + url[len("postgresql://") :]
+        elif url.startswith("ppostgresql://"):
+            url = "postgresql+asyncpg://" + url[len("ppostgresql://") :]
 
         # asyncpg does not use libpq sslmode=; strip it and enable TLS via connect_args instead
         ssl_required = bool(self.DATABASE_SSL_REQUIRE)
