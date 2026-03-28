@@ -74,6 +74,12 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
         return user.to_dict()
     except HTTPException:
         raise
+    except ValueError as e:
+        logger.warning("Registration validation failed for email %s: %s", user_data.email, e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
     except Exception as e:
         logger.exception("Registration failed for email %s", user_data.email)
         raise HTTPException(

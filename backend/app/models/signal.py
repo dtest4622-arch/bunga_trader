@@ -59,6 +59,10 @@ class Signal(Base):
     
     # Relationships (Trade.signal_id -> Signal.id)
     trades = relationship("Trade", back_populates="signal", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<Signal(id={self.id}, pair={self.pair}, direction={self.direction})>"
+
     
     def __repr__(self):
         return f"<Signal(id={self.id}, pair={self.pair}, direction={self.direction})>"

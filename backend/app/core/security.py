@@ -20,6 +20,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def get_password_hash(password: str) -> str:
     """Hash a password."""
+    if len(password.encode("utf-8")) > 72:
+        raise ValueError("Password must be at most 72 bytes when UTF-8 encoded")
     return pwd_context.hash(password)
 
 
@@ -132,6 +134,9 @@ def validate_password(password: str) -> tuple[bool, str]:
     """Validate password strength."""
     if len(password) < settings.PASSWORD_MIN_LENGTH:
         return False, f"Password must be at least {settings.PASSWORD_MIN_LENGTH} characters long"
+
+    if len(password.encode("utf-8")) > 72:
+        return False, "Password must be at most 72 bytes when UTF-8 encoded"
     
     if not any(c.isupper() for c in password):
         return False, "Password must contain at least one uppercase letter"
