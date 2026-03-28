@@ -3,6 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../blocs/auth/auth_bloc.dart';
+import '../profile/profile_screen.dart';
+import '../kyc/kyc_screen.dart';
+import '../trading_settings/risk_settings_screen.dart';
+import '../trading_settings/compounding_screen.dart';
+import '../trading_settings/signal_preferences_screen.dart';
+import '../support/help_center_screen.dart';
+import '../support/contact_support_screen.dart';
+import '../support/about_screen.dart';
+import 'change_password_screen.dart';
+import 'two_fa_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -25,7 +35,10 @@ class SettingsScreen extends StatelessWidget {
               title: 'Profile',
               subtitle: 'Manage your personal information',
               onTap: () {
-                // Navigate to profile
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                );
               },
             ),
             _buildSettingsTile(
@@ -47,19 +60,26 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
               onTap: () {
-                // Navigate to KYC
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const KYCScreen()),
+                );
               },
             ),
             _buildSettingsTile(
               icon: Icons.lock_outline,
               title: 'Change Password',
               onTap: () {
-                // Navigate to change password
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const ChangePasswordScreen()),
+                );
               },
             ),
           ]),
           const SizedBox(height: 24),
-          
+
           // Trading Section
           _buildSectionHeader('Trading'),
           _buildSettingsCard([
@@ -68,7 +88,10 @@ class SettingsScreen extends StatelessWidget {
               title: 'Risk Settings',
               subtitle: 'Configure risk management',
               onTap: () {
-                // Navigate to risk settings
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RiskSettingsScreen()),
+                );
               },
             ),
             _buildSettingsTile(
@@ -76,19 +99,26 @@ class SettingsScreen extends StatelessWidget {
               title: 'Compounding',
               subtitle: 'Set up automatic compounding',
               onTap: () {
-                // Navigate to compounding settings
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CompoundingScreen()),
+                );
               },
             ),
             _buildSettingsTile(
               icon: Icons.notifications_active_outlined,
               title: 'Signal Preferences',
               onTap: () {
-                // Navigate to signal preferences
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const SignalPreferencesScreen()),
+                );
               },
             ),
           ]),
           const SizedBox(height: 24),
-          
+
           // Notifications Section
           _buildSectionHeader('Notifications'),
           _buildSettingsCard([
@@ -120,7 +150,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 24),
-          
+
           // Security Section
           _buildSectionHeader('Security'),
           _buildSettingsCard([
@@ -138,12 +168,15 @@ class SettingsScreen extends StatelessWidget {
               title: 'Two-Factor Authentication',
               subtitle: 'Add an extra layer of security',
               onTap: () {
-                // Navigate to 2FA
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TwoFAScreen()),
+                );
               },
             ),
           ]),
           const SizedBox(height: 24),
-          
+
           // Support Section
           _buildSectionHeader('Support'),
           _buildSettingsCard([
@@ -151,14 +184,21 @@ class SettingsScreen extends StatelessWidget {
               icon: Icons.help_outline,
               title: 'Help Center',
               onTap: () {
-                // Navigate to help
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const HelpCenterScreen()),
+                );
               },
             ),
             _buildSettingsTile(
               icon: Icons.chat_bubble_outline,
               title: 'Contact Support',
               onTap: () {
-                // Navigate to support
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const ContactSupportScreen()),
+                );
               },
             ),
             _buildSettingsTile(
@@ -166,12 +206,15 @@ class SettingsScreen extends StatelessWidget {
               title: 'About',
               subtitle: 'Version ${AppConstants.appVersion}',
               onTap: () {
-                // Show about dialog
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AboutScreen()),
+                );
               },
             ),
           ]),
           const SizedBox(height: 24),
-          
+
           // Logout Button
           ElevatedButton.icon(
             onPressed: () {
@@ -241,7 +284,8 @@ class SettingsScreen extends StatelessWidget {
               ),
             )
           : null,
-      trailing: trailing ?? const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
+      trailing: trailing ??
+          const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
       onTap: onTap,
     );
   }

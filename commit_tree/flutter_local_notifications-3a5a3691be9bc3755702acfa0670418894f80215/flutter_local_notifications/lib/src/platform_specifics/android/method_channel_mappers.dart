@@ -49,10 +49,18 @@ extension AndroidNotificationChannelMapper on AndroidNotificationChannel {
         'enableVibration': enableVibration,
         'vibrationPattern': vibrationPattern,
         'enableLights': enableLights,
-        'ledColorAlpha': ledColor?.alpha,
-        'ledColorRed': ledColor?.red,
-        'ledColorGreen': ledColor?.green,
-        'ledColorBlue': ledColor?.blue,
+        'ledColorAlpha': ledColor != null
+            ? (ledColor!.a * 255.0).round().clamp(0, 255)
+            : null,
+        'ledColorRed': ledColor != null
+            ? (ledColor!.r * 255.0).round().clamp(0, 255)
+            : null,
+        'ledColorGreen': ledColor != null
+            ? (ledColor!.g * 255.0).round().clamp(0, 255)
+            : null,
+        'ledColorBlue': ledColor != null
+            ? (ledColor!.b * 255.0).round().clamp(0, 255)
+            : null,
         'audioAttributesUsage': audioAttributesUsage.value,
         'channelAction':
             AndroidNotificationChannelAction.createIfNotExists.index,
@@ -190,10 +198,14 @@ extension AndroidNotificationDetailsMapper on AndroidNotificationDetails {
         'autoCancel': autoCancel,
         'ongoing': ongoing,
         'silent': silent,
-        'colorAlpha': color?.alpha,
-        'colorRed': color?.red,
-        'colorGreen': color?.green,
-        'colorBlue': color?.blue,
+        'colorAlpha':
+            color != null ? (color!.a * 255.0).round().clamp(0, 255) : null,
+        'colorRed':
+            color != null ? (color!.r * 255.0).round().clamp(0, 255) : null,
+        'colorGreen':
+            color != null ? (color!.g * 255.0).round().clamp(0, 255) : null,
+        'colorBlue':
+            color != null ? (color!.b * 255.0).round().clamp(0, 255) : null,
         'onlyAlertOnce': onlyAlertOnce,
         'showWhen': showWhen,
         'when': when,
@@ -204,10 +216,18 @@ extension AndroidNotificationDetailsMapper on AndroidNotificationDetails {
         'progress': progress,
         'indeterminate': indeterminate,
         'enableLights': enableLights,
-        'ledColorAlpha': ledColor?.alpha,
-        'ledColorRed': ledColor?.red,
-        'ledColorGreen': ledColor?.green,
-        'ledColorBlue': ledColor?.blue,
+        'ledColorAlpha': ledColor != null
+            ? (ledColor!.a * 255.0).round().clamp(0, 255)
+            : null,
+        'ledColorRed': ledColor != null
+            ? (ledColor!.r * 255.0).round().clamp(0, 255)
+            : null,
+        'ledColorGreen': ledColor != null
+            ? (ledColor!.g * 255.0).round().clamp(0, 255)
+            : null,
+        'ledColorBlue': ledColor != null
+            ? (ledColor!.b * 255.0).round().clamp(0, 255)
+            : null,
         'ledOnMs': ledOnMs,
         'ledOffMs': ledOffMs,
         'ticker': ticker,
@@ -294,10 +314,18 @@ extension AndroidNotificationDetailsMapper on AndroidNotificationDetails {
             (AndroidNotificationAction e) => <String, dynamic>{
               'id': e.id,
               'title': e.title,
-              'titleColorAlpha': e.titleColor?.alpha,
-              'titleColorRed': e.titleColor?.red,
-              'titleColorGreen': e.titleColor?.green,
-              'titleColorBlue': e.titleColor?.blue,
+              'titleColorAlpha': e.titleColor != null
+                  ? (e.titleColor!.a * 255.0).round().clamp(0, 255)
+                  : null,
+              'titleColorRed': e.titleColor != null
+                  ? (e.titleColor!.r * 255.0).round().clamp(0, 255)
+                  : null,
+              'titleColorGreen': e.titleColor != null
+                  ? (e.titleColor!.g * 255.0).round().clamp(0, 255)
+                  : null,
+              'titleColorBlue': e.titleColor != null
+                  ? (e.titleColor!.b * 255.0).round().clamp(0, 255)
+                  : null,
               if (e.icon != null) ...<String, Object>{
                 'icon': e.icon!.data,
                 'iconBitmapSource': e.icon!.source.index,

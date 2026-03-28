@@ -35,7 +35,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (token != null && token.isNotEmpty) {
         // Validate token and get user data
         final userData = await _apiService.getCurrentUser();
-        final user = UserModel.fromJson(userData);
+        final user = UserModel.fromJson(userData).copyWith(
+          authToken: token,
+          refreshToken: await _apiService.getRefreshToken(),
+        );
 
         // Save to local storage
         await _userBox.put('current_user', user);
@@ -57,7 +60,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     try {
       final response = await _apiService.login(event.email, event.password);
-      final user = UserModel.fromJson(response);
+      final token = await _apiService.getAuthToken();
+      final refreshToken = await _apiService.getRefreshToken();
+      final user = UserModel.fromJson(response).copyWith(
+        authToken: token,
+        refreshToken: refreshToken,
+      );
 
       // Save to local storage
       await _userBox.put('current_user', user);
