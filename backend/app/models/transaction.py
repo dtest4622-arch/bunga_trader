@@ -51,8 +51,8 @@ class Transaction(Base):
     
     # Metadata
     description = Column(String(255), nullable=True)
-    metadata = Column(JSON, nullable=True)
-    
+    extra_metadata = Column("metadata", JSON, nullable=True)
+
     # Callback Data
     callback_data = Column(JSON, nullable=True)
     callback_received_at = Column(DateTime, nullable=True)
@@ -80,6 +80,7 @@ class Transaction(Base):
             "phone_number": self.phone_number,
             "checkout_request_id": self.checkout_request_id,
             "description": self.description,
+            "metadata": self.extra_metadata,
             "error_message": self.error_message,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,

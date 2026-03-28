@@ -168,7 +168,7 @@ async def initiate_deposit(
         transaction.checkout_request_id = stk_response.get("CheckoutRequestID")
         transaction.merchant_request_id = stk_response.get("MerchantRequestID")
         transaction.status = TransactionStatus.PROCESSING
-        transaction.metadata = stk_response
+        transaction.extra_metadata = stk_response
 
         await db.commit()
         await db.refresh(transaction)
@@ -302,7 +302,7 @@ async def request_withdrawal(
         )
 
         # Update transaction with M-Pesa response data
-        transaction.metadata = b2c_response
+        transaction.extra_metadata = b2c_response
         transaction.status = TransactionStatus.PROCESSING
 
         await db.commit()
