@@ -6,23 +6,46 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from .config import settings
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing with argon2 fallback for bcrypt issues
+pwd_context = CryptContext(
+    schemes=["bcrypt", "argon2"],
+    deprecated="auto"
+)
 
 # JWT Bearer token
 security = HTTPBearer()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against a hashed password."""
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verify a plain password against a hashed password (supports bcrypt & argon2)."""
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception as e:
+        import logging
+        logger_local = logging.getLogger(__name__)
+        logger_local.error(f"Password verification failed: {e}")
+        return False
 
 
 def get_password_hash(password: str) -> str:
-    """Hash a password."""
+    """Hash a password using bcrypt (or argon2 if bcrypt fails)."""
+    import logging
+    logger_local = logging.getLogger(__name__)
+    
+    # Validate length before hashing
     if len(password.encode("utf-8")) > 72:
         raise ValueError("Password must be at most 72 bytes when UTF-8 encoded")
-    return pwd_context.hash(password)
+    
+    try:
+        return pwd_context.hash(password, scheme="bcrypt")
+    except (ValueError, AttributeError) as e:
+        # If bcrypt fails due to version incompatibility, use argon2 via context
+        logger_local.warning(f"Bcrypt hashing failed ({e}), falling back to argon2")
+        try:
+            return pwd_context.hash(password, scheme="argon2")
+        except Exception as fallback_error:
+            logger_local.error(f"Argon2 hashing also failed: {fallback_error}")
+            raise ValueError(f"Password hashing unavailable: {str(e)}")
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
