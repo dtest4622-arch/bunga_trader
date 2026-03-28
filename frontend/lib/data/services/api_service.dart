@@ -7,7 +7,6 @@ class ApiService {
   factory ApiService() => _instance;
 
   late Dio _apiDio;
-  late Dio _supabaseDio;
   final _storage = const FlutterSecureStorage();
 
   ApiService._internal() {
@@ -15,7 +14,7 @@ class ApiService {
   }
 
   void _initializeDio() {
-    // Backend API for authentication and business logic
+    // Backend API for all requests (authentication, business logic, and data access)
     _apiDio = Dio(BaseOptions(
       baseUrl: AppConstants.apiBaseUrl,
       connectTimeout: const Duration(seconds: 30),
@@ -25,19 +24,7 @@ class ApiService {
       },
     ));
 
-    // Supabase REST API for data access (profiles, accounts, signals, etc.)
-    _supabaseDio = Dio(BaseOptions(
-      baseUrl: '${AppConstants.supabaseUrl}/rest/v1',
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': AppConstants.supabaseAnonKey,
-        'Authorization': 'Bearer ${AppConstants.supabaseAnonKey}',
-      },
-    ));
-
-    // Setup interceptors for both clients
+    // Setup interceptors
     _setupInterceptors();
   }
 
@@ -74,28 +61,11 @@ class ApiService {
         },
       ),
     );
-
-    _supabaseDio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final token = await getAuthToken();
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          return handler.next(options);
-        },
-        onError: (error, handler) async {
-          print('[Supabase Error] ${error.type} - ${error.message}');
-          return handler.next(error);
-        },
-      ),
-    );
   }
 
   Future<void> setAuthToken(String token) async {
     await _storage.write(key: AppConstants.authTokenKey, value: token);
     _apiDio.options.headers['Authorization'] = 'Bearer $token';
-    _supabaseDio.options.headers['Authorization'] = 'Bearer $token';
   }
 
   Future<String?> getAuthToken() async {
@@ -114,7 +84,6 @@ class ApiService {
     await _storage.delete(key: AppConstants.authTokenKey);
     await _storage.delete(key: AppConstants.refreshTokenKey);
     _apiDio.options.headers.remove('Authorization');
-    _supabaseDio.options.headers.remove('Authorization');
   }
 
   Future<bool> _refreshToken() async {
@@ -237,13 +206,13 @@ class ApiService {
   }
 
   // ==================== ACCOUNTS ====================
+  // ==================== TRADING ACCOUNTS ====================
 
   Future<List<Map<String, dynamic>>> getTradingAccounts() async {
     final token = await getAuthToken();
     if (token == null) return [];
 
-    final response = await _supabaseDio.get('/trading_accounts',
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    final response = await _apiDio.get('/accounts');
     return List<Map<String, dynamic>>.from(response.data);
   }
 
@@ -251,10 +220,8 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) throw Exception('Not authenticated');
 
-    final response = await _supabaseDio.get('/trading_accounts',
-        queryParameters: {'id': 'eq.$accountId'},
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
-    return response.data[0];
+    final response = await _apiDio.get('/accounts/$accountId');
+    return response.data;
   }
 
   Future<Map<String, dynamic>> connectBrokerAccount(
@@ -263,16 +230,14 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) throw Exception('Not authenticated');
 
-    final response = await _supabaseDio.post('/trading_accounts',
-        data: {
-          'broker': broker,
-          'login': login,
-          'password': password,
-          'server': server,
-          'platform': platform,
-          if (accountType != null) 'account_type': accountType,
-        },
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    final response = await _apiDio.post('/accounts/connect', data: {
+      'broker': broker,
+      'login': login,
+      'password': password,
+      'server': server,
+      'platform': platform,
+      if (accountType != null) 'account_type': accountType,
+    });
     return response.data;
   }
 
@@ -280,9 +245,7 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) throw Exception('Not authenticated');
 
-    await _supabaseDio.delete('/trading_accounts',
-        queryParameters: {'id': 'eq.$accountId'},
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    await _apiDio.delete('/accounts/$accountId');
   }
 
   Future<void> switchActiveAccount(String accountId) async {
@@ -313,20 +276,18 @@ class ApiService {
     final queryParams = <String, dynamic>{
       'limit': limit,
       'offset': offset,
-      'order': 'created_at.desc',
-      if (status != null) 'status': 'eq.$status',
-      if (pair != null) 'pair': 'eq.$pair',
+      if (status != null) 'status': status,
+      if (pair != null) 'pair': pair,
     };
 
     final response =
-        await _supabaseDio.get('/signals', queryParameters: queryParams);
+        await _apiDio.get('/signals', queryParameters: queryParams);
     return List<Map<String, dynamic>>.from(response.data);
   }
 
   Future<Map<String, dynamic>> getSignal(String signalId) async {
-    final response = await _supabaseDio
-        .get('/signals', queryParameters: {'id': 'eq.$signalId'});
-    return response.data[0];
+    final response = await _apiDio.get('/signals/$signalId');
+    return response.data;
   }
 
   Future<Map<String, dynamic>> executeSignal(
@@ -337,14 +298,10 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) throw Exception('Not authenticated');
 
-    final response = await _supabaseDio.post('/executed_signals',
-        data: {
-          'signal_id': signalId,
-          'account_id': accountId,
-          'auto_execute': autoExecute,
-          'executed_at': DateTime.now().toIso8601String(),
-        },
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    final response = await _apiDio.post('/signals/$signalId/execute', data: {
+      'account_id': accountId,
+      'auto_execute': autoExecute,
+    });
     return response.data;
   }
 
@@ -352,10 +309,7 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) throw Exception('Not authenticated');
 
-    await _supabaseDio.patch('/signals',
-        data: {'status': 'rejected', 'rejection_reason': reason},
-        queryParameters: {'id': 'eq.$signalId'},
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    await _apiDio.post('/signals/$signalId/reject', data: {'reason': reason});
   }
 
   // ==================== TRADES ====================
@@ -364,9 +318,7 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) return [];
 
-    final response = await _supabaseDio.get('/trades',
-        queryParameters: {'status': 'eq.open', 'order': 'created_at.desc'},
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    final response = await _apiDio.get('/trades/active');
     return List<Map<String, dynamic>>.from(response.data);
   }
 
@@ -382,14 +334,12 @@ class ApiService {
     final queryParams = <String, dynamic>{
       'limit': limit,
       'offset': offset,
-      'order': 'created_at.desc',
-      if (from != null) 'created_at': 'gte.${from.toIso8601String()}',
-      if (to != null) 'created_at': 'lte.${to.toIso8601String()}',
+      if (from != null) 'from_date': from.toIso8601String(),
+      if (to != null) 'to_date': to.toIso8601String(),
     };
 
-    final response = await _supabaseDio.get('/trades',
-        queryParameters: queryParams,
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    final response =
+        await _apiDio.get('/trades/history', queryParameters: queryParams);
     return List<Map<String, dynamic>>.from(response.data);
   }
 
@@ -397,10 +347,8 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) throw Exception('Not authenticated');
 
-    final response = await _supabaseDio.get('/trades',
-        queryParameters: {'id': 'eq.$tradeId'},
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
-    return response.data[0];
+    final response = await _apiDio.get('/trades/$tradeId');
+    return response.data;
   }
 
   Future<Map<String, dynamic>> closeTrade(
@@ -411,15 +359,10 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) throw Exception('Not authenticated');
 
-    final response = await _supabaseDio.patch('/trades',
-        data: {
-          'status': 'closed',
-          'closed_at': DateTime.now().toIso8601String(),
-          if (partialPercent != null) 'closed_percent': partialPercent,
-          if (reason != null) 'close_reason': reason,
-        },
-        queryParameters: {'id': 'eq.$tradeId'},
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    final response = await _apiDio.post('/trades/$tradeId/close', data: {
+      if (partialPercent != null) 'partial_percent': partialPercent,
+      if (reason != null) 'reason': reason,
+    });
     return response.data;
   }
 
@@ -433,15 +376,12 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) throw Exception('Not authenticated');
 
-    final response = await _supabaseDio.patch('/trades',
-        data: {
-          if (newStopLoss != null) 'stop_loss': newStopLoss,
-          if (newTakeProfit != null) 'take_profit': newTakeProfit,
-          if (newTakeProfit2 != null) 'take_profit_2': newTakeProfit2,
-          if (newTakeProfit3 != null) 'take_profit_3': newTakeProfit3,
-        },
-        queryParameters: {'id': 'eq.$tradeId'},
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    final response = await _apiDio.patch('/trades/$tradeId', data: {
+      if (newStopLoss != null) 'stop_loss': newStopLoss,
+      if (newTakeProfit != null) 'take_profit': newTakeProfit,
+      if (newTakeProfit2 != null) 'take_profit_2': newTakeProfit2,
+      if (newTakeProfit3 != null) 'take_profit_3': newTakeProfit3,
+    });
     return response.data;
   }
 
@@ -449,28 +389,10 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) throw Exception('Not authenticated');
 
-    // Get all open trades
-    final queryParams = <String, dynamic>{'status': 'eq.open'};
-    if (pair != null) {
-      queryParams['pair'] = 'eq.$pair';
-    }
-
-    final response = await _supabaseDio.get('/trades',
-        queryParameters: queryParams,
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
-
-    final trades = List<Map<String, dynamic>>.from(response.data);
-    for (var trade in trades) {
-      await _supabaseDio.patch('/trades',
-          data: {
-            'status': 'closed',
-            'closed_at': DateTime.now().toIso8601String()
-          },
-          queryParameters: {'id': 'eq.${trade["id"]}'},
-          options: Options(headers: {'Authorization': 'Bearer $token'}));
-    }
-
-    return {'closed_count': trades.length};
+    final response = await _apiDio.post('/trades/close-all', data: {
+      if (pair != null) 'pair': pair,
+    });
+    return response.data;
   }
 
   // ==================== M-PESA ====================
@@ -479,21 +401,16 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) throw Exception('Not authenticated');
 
-    final response = await _supabaseDio.post('/mpesa_deposits',
-        data: {
-          'amount_kes': amountKes,
-          'status': 'pending',
-          'created_at': DateTime.now().toIso8601String(),
-        },
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    final response = await _apiDio.post('/mpesa/deposit', data: {
+      'amount_kes': amountKes,
+    });
     return response.data;
   }
 
   Future<Map<String, dynamic>> checkDepositStatus(
       String checkoutRequestId) async {
-    final response = await _supabaseDio.get('/mpesa_deposits',
-        queryParameters: {'checkout_request_id': 'eq.$checkoutRequestId'});
-    return response.data[0] ?? {'status': 'unknown'};
+    final response = await _apiDio.get('/mpesa/deposit/$checkoutRequestId');
+    return response.data ?? {'status': 'unknown'};
   }
 
   Future<Map<String, dynamic>> requestWithdrawal(
@@ -503,14 +420,10 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) throw Exception('Not authenticated');
 
-    final response = await _supabaseDio.post('/mpesa_withdrawals',
-        data: {
-          'amount_usd': amountUsd,
-          'phone_number': phoneNumber,
-          'status': 'pending',
-          'created_at': DateTime.now().toIso8601String(),
-        },
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    final response = await _apiDio.post('/mpesa/withdrawal', data: {
+      'amount_usd': amountUsd,
+      'phone_number': phoneNumber,
+    });
     return response.data;
   }
 
@@ -521,35 +434,9 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) return [];
 
-    // Combine deposits and withdrawals into transactions
-    final deposits = await _supabaseDio.get('/mpesa_deposits',
-        queryParameters: {'limit': limit, 'order': 'created_at.desc'},
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
-
-    final withdrawals = await _supabaseDio.get('/mpesa_withdrawals',
-        queryParameters: {'limit': limit, 'order': 'created_at.desc'},
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
-
-    final List<Map<String, dynamic>> transactions = [];
-
-    for (var d in deposits.data) {
-      transactions.add({
-        ...d,
-        'type': 'deposit',
-      });
-    }
-
-    for (var w in withdrawals.data) {
-      transactions.add({
-        ...w,
-        'type': 'withdrawal',
-      });
-    }
-
-    transactions.sort((a, b) => DateTime.parse(b['created_at'])
-        .compareTo(DateTime.parse(a['created_at'])));
-
-    return transactions.take(limit).toList();
+    final response = await _apiDio.get('/mpesa/transactions',
+        queryParameters: {'limit': limit, 'offset': offset});
+    return List<Map<String, dynamic>>.from(response.data);
   }
 
   // ==================== SETTINGS ====================
@@ -558,14 +445,8 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) throw Exception('Not authenticated');
 
-    final response = await _supabaseDio.get('/user_settings',
-        queryParameters: {'key': 'eq.compounding'},
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
-
-    if (response.data.isNotEmpty) {
-      return response.data[0]['value'] ?? {};
-    }
-    return {};
+    final response = await _apiDio.get('/settings/compounding');
+    return response.data ?? {};
   }
 
   Future<void> updateCompoundingSettings(Map<String, dynamic> settings) async {
@@ -576,14 +457,8 @@ class ApiService {
     final token = await getAuthToken();
     if (token == null) throw Exception('Not authenticated');
 
-    final response = await _supabaseDio.get('/user_settings',
-        queryParameters: {'key': 'eq.risk'},
-        options: Options(headers: {'Authorization': 'Bearer $token'}));
-
-    if (response.data.isNotEmpty) {
-      return response.data[0]['value'] ?? {};
-    }
-    return {};
+    final response = await _apiDio.get('/settings/risk');
+    return response.data ?? {};
   }
 
   Future<void> updateRiskSettings(Map<String, dynamic> settings) async {
@@ -611,13 +486,13 @@ class ApiService {
     String? accountId,
   }) async {
     final queryParams = <String, dynamic>{
-      if (from != null) 'created_at': 'gte.${from.toIso8601String()}',
-      if (to != null) 'created_at': 'lte.${to.toIso8601String()}',
-      if (accountId != null) 'account_id': 'eq.$accountId',
+      if (from != null) 'from_date': from.toIso8601String(),
+      if (to != null) 'to_date': to.toIso8601String(),
+      if (accountId != null) 'account_id': accountId,
     };
 
     final tradesResponse =
-        await _supabaseDio.get('/trades', queryParameters: queryParams);
+        await _apiDio.get('/trades', queryParameters: queryParams);
     final trades = List<Map<String, dynamic>>.from(tradesResponse.data);
 
     double totalPnl = 0;
@@ -662,12 +537,11 @@ class ApiService {
   }) async {
     final queryParams = <String, dynamic>{
       'limit': limit,
-      'status': 'eq.closed',
-      'order': 'profit.desc',
+      if (accountId != null) 'account_id': accountId,
     };
 
     final response =
-        await _supabaseDio.get('/signals', queryParameters: queryParams);
+        await _apiDio.get('/signals', queryParameters: queryParams);
     return List<Map<String, dynamic>>.from(response.data);
   }
 }
